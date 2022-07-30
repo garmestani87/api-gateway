@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: API-GATEWAY
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        register: true
+        registerHealthCheck: false
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: USER-MANAGEMENT
+          uri: lb://USER-MANAGEMENT
+          predicates:
+            - Path=/api/security/**
+          filters:
+            - RewritePath=/api/security/(?<path>.*), /$\{path}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                redis-rate-limiter.requestedTokens: 1
+
+logging.level.com.netflix: DEBUG
+
+server:
+  port: 8080
+
+management:
+  health:
+    redis:
+      enabled: true
